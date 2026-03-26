@@ -87,5 +87,5 @@ jobs:
       - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: StudentManager-Fixed-IPA
-          path: StudentManager.ipa
+          name: rased-modern-Teacher-IPA
+          path: rased-modern-Teacher.ipa

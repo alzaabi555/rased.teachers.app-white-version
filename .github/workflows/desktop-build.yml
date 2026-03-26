@@ -1,0 +1,38 @@
+
+name: Build Windows Desktop App (EXE)
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      # تثبيت المكتبات اللازمة مع تجاهل الاختيارية (مثل canvas) لتجنب أخطاء البناء
+      - name: Install Dependencies
+        run: npm install --no-optional
+
+      # بناء تطبيق سطح المكتب (يقوم ببناء الويب ثم تحويله لملف exe)
+      # يتم استخدام الأمر الذي أضفناه سابقاً في package.json
+      - name: Build Electron App
+        run: npm run electron:dist -- --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # رفع ملفات التطبيق (exe و appx) ليمكنك تحميلها من صفحة Actions
+      - name: Upload Windows Apps
+        uses: actions/upload-artifact@v4
+        with:
+          name: StudentManager-Windows-Setup
+          path: |
+            dist/*.exe
+            dist/**/*.appx
+     

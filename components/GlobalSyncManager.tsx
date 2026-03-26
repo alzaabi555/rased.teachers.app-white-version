@@ -224,7 +224,7 @@ const GlobalSyncManager: React.FC = () => {
 
               const jsonString = JSON.stringify(dataToSave, null, 2);
               if (Capacitor.isNativePlatform() || (window as any).electron !== undefined) {
-                  await Filesystem.writeFile({ path: 'raseddatabasev2.json', data: jsonString, directory: Directory.Data, encoding: Encoding.UTF8 });
+                  await Filesystem.writeFile({ path: 'raseddatabase_modern.json', data: jsonString, directory: Directory.Data, encoding: Encoding.UTF8 });
               } else {
                   localStorage.setItem('rased_web_backup', jsonString);
               }

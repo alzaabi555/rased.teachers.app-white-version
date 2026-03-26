@@ -1,7 +1,7 @@
 
 {
   "appId": "com.alzaabi.rased.teachersmodern.app",
-  "appName": "راصد",
+  "appName": "راصد - النسخة الحديثة",
   "webDir": "www",
   "server": {
     "androidScheme": "https",

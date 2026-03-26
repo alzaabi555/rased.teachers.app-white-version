@@ -110,7 +110,7 @@ const Settings = () => {
                 if(data.gradeSettings) setGradeSettings(data.gradeSettings);
                 
                 if (Capacitor.isNativePlatform() || (window as any).electron !== undefined) {
-                    await Filesystem.writeFile({ path: 'raseddatabasev2.json', data: event.target?.result as string, directory: Directory.Data, encoding: Encoding.UTF8 });
+                    await Filesystem.writeFile({ path: 'raseddatabase_modern.json', data: event.target?.result as string, directory: Directory.Data, encoding: Encoding.UTF8 });
                 }
                 alert(t('alertRestoreSuccess'));
                 setTimeout(() => window.location.reload(), 1000);

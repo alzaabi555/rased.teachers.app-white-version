@@ -1,0 +1,91 @@
+name: Build iOS App
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      # 💉 المصل المضاد: تثبيت مكتبة vips لحل مشكلة مكتبة sharp مع سيرفرات أبل الحديثة
+      - name: Install vips (Fix for sharp on Apple Silicon)
+        run: brew install vips
+
+      - name: Install Dependencies
+        run: npm install --legacy-peer-deps
+
+      # تنظيف شامل للكاش القديم
+      - name: Clean Old Builds
+        run: |
+          rm -rf www
+          rm -rf dist
+          rm -rf ios
+
+      - name: Build Web Assets
+        run: npm run build
+
+      # إنشاء منصة iOS من الصفر (لضمان أخذ إعدادات www الجديدة)
+      - name: Create iOS Platform
+        run: |
+          npx cap add ios
+          npx cap sync ios
+
+      - name: Copy GoogleService-Info.plist to iOS
+        run: |
+          if [ -f "GoogleService-Info.plist" ]; then
+            echo "📄 Found GoogleService-Info.plist, copying..."
+            cp GoogleService-Info.plist ios/App/App/
+          else
+            echo "⚠️ GoogleService-Info.plist NOT found! Skipping..."
+          fi
+
+      - name: Generate App Icons
+        run: npx capacitor-assets generate --ios || true
+
+      - name: Inject Google URL Scheme
+        run: |
+          PLIST="ios/App/App/Info.plist"
+          REVERSED_CLIENT_ID="com.googleusercontent.apps.87037584903-3uc4aeg3nc5lk3pu8crjbaad184bhjth"
+          
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" $PLIST || true
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0 dict" $PLIST || true
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" $PLIST || true
+          /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string $REVERSED_CLIENT_ID" $PLIST || true
+
+      - name: Inject iOS Permissions
+        run: |
+          PLIST="ios/App/App/Info.plist"
+          /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'Profile Picture'" $PLIST || true
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 'Profile Picture'" $PLIST || true
+
+      - name: Build Xcode Archive
+        run: |
+          xcodebuild -workspace ios/App/App.xcworkspace \
+                       -scheme App \
+                       -configuration Release \
+                       -destination 'generic/platform=iOS' \
+                       -archivePath App.xcarchive \
+                       -allowProvisioningUpdates \
+                       archive \
+                       CODE_SIGNING_ALLOWED=NO
+
+      - name: Prepare IPA
+        run: |
+          mkdir -p build/Payload
+          cp -R App.xcarchive/Products/Applications/App.app build/Payload/
+          cd build && zip -r ../StudentManager.ipa Payload/
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: StudentManager-Fixed-IPA
+          path: StudentManager.ipa

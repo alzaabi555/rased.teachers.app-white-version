@@ -78,7 +78,7 @@ jobs:
                        archive \
                        CODE_SIGNING_ALLOWED=NO
 
-            - name: Prepare IPA
+      - name: Prepare IPA
         run: |
           mkdir -p build/Payload
           cp -R App.xcarchive/Products/Applications/App.app build/Payload/
